@@ -7,7 +7,7 @@
  *
  *	@package Phish_Command_Info
  */
-class Phish_PhpFileInfo
+class Phish_FileAnalyzer
 {
 
 
@@ -24,6 +24,14 @@ class Phish_PhpFileInfo
  	 *	@return array
      */
     public function __construct($path) {
+        Jm_Util_Checktype::check('string', $path);
+
+        if(!file_exists($path)) {
+            throw new Jm_Filesystem_FileNotFoundException(
+                'The file ' . $path . ' was not found'
+            );
+        }
+
 
         $this->namespaces = array();
         $this->classes = array();
@@ -86,7 +94,7 @@ class Phish_PhpFileInfo
     }
 
 
-    public function getClasses() {
+    public function classes() {
         return $this->classes;
     }
 
@@ -96,7 +104,7 @@ class Phish_PhpFileInfo
         $str .= '  ' . implode(PHP_EOL . "  ", $this->getNamespaces());
         $str .= PHP_EOL;
         $str  = 'Classes:' . PHP_EOL;
-        $str .= '  ' . implode(PHP_EOL . "  ", $this->getClasses());
+        $str .= '  ' . implode(PHP_EOL . "  ", $this->classes());
         return $str;
     }
 }

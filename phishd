@@ -1,9 +1,0 @@
-#!/usr/bin/php
-<?php
-
-require_once 'Jm/Autoloader.php';
-
-$daemon = new Phish_Daemon();
-$daemon->start();
-
-

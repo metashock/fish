@@ -1,0 +1,19 @@
+#!/usr/bin/php
+<?php
+// required for signal handling
+declare(ticks = 1);
+
+require_once 'Jm/Autoloader.php';
+Jm_Autoloader::singleton()
+  ->prependPath('../Jm_Os_Daemon/lib/php');
+Jm_Autoloader::singleton()
+  ->prependPath('../Jm_Os_Inotify/lib/php');
+
+$runner = new Phish_CommandRunner();
+
+if(!isset($argv[1])) {
+    $argv[1] === 'start';
+}
+
+$runner->run($argv[1], $argv);
+
