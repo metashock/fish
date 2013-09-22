@@ -15,8 +15,12 @@ abstract class Phish_Command
 
     abstract public function run();
 
+
     public static function factory($command, array $argv) {
         $classname = 'Phish_Command_' . ucfirst($command);
+        if(!Jm_Autoloader::singleton()->autoload($classname)) {
+            throw new Exception('Command ' . $command . ' not found');
+        } 
         return new $classname($argv);
     }
 }

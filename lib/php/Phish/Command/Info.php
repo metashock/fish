@@ -4,6 +4,9 @@ class Phish_Command_Info extends Phish_Command
 {
 
     public function run() {
+        if(!isset($this->argv[2])) {
+            $this->usage();
+        }
         $search = $this->argv[2];
         $index = Phish_Index::load('phish_info');
         $entry = $index->findclass($search);
@@ -19,5 +22,14 @@ class Phish_Command_Info extends Phish_Command
         } else { 
             $renderer->renderElementNotFound($search);
         }
+    }
+
+
+    public function usage() {
+        $console = Jm_Console::singleton();
+        $console->writeln('Usage: phish info SEARCH');
+        $console->writeln('');
+        $console->writeln('SEARCH can be a class name or a function name.');
+        exit(1);
     }
 }
