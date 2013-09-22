@@ -12,7 +12,7 @@ Jm_Autoloader::singleton()
 $runner = new Phish_CommandRunner();
 
 if(!isset($argv[1])) {
-    $argv[1] === 'start';
+    $argv[1] = 'start';
 }
 
 $runner->run($argv[1], $argv);
