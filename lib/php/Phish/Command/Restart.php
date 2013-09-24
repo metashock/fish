@@ -11,5 +11,20 @@ class Phish_Command_Restart extends Phish_Command
         $daemon = new Phish_Daemon($configuration);
         $daemon->restart();
     }
+
+
+    public static function shortdesc() {
+        return 'Restarts the phish monitor in the current directory';
+    }
+
+
+    public static function usage() {
+        $console = Jm_Console::singleton();
+        $console->write('USAGE: ', 'bold');
+        $console->writeln('phish restart');
+        $console->writeln();
+        $console->writeln(self::shortdesc());
+        $console->writeln();
+    }
 }
 

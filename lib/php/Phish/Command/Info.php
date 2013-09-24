@@ -8,7 +8,7 @@ class Phish_Command_Info extends Phish_Command
      */
     public function run() {
         if(!isset($this->argv[2])) {
-            $this->usage();
+            self::usage();
         }
 
         $search = $this->argv[2];
@@ -41,11 +41,19 @@ class Phish_Command_Info extends Phish_Command
     }
 
 
-    public function usage() {
+    public static function shortdesc() {
+        return 'Displays reflection information about a class or function';
+    }
+
+
+    public static function usage() {
         $console = Jm_Console::singleton();
-        $console->writeln('Usage: phish info SEARCH');
-        $console->writeln('');
-        $console->writeln('SEARCH can be a class name or a function name.');
+        $console->write('USAGE: ', 'bold');
+        $console->writeln('phish info SEARCH');
+        $console->writeln();
+        $console->write('SEARCH ', 'bold');
+        $console->writeln('can be a class name or a function name.');
+        $console->writeln();
         exit(1);
     }
 }
