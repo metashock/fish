@@ -139,8 +139,8 @@ class Phish_Renderer_Console extends Phish_Renderer
                 $this->console->colorize('$', 'yellow') . 
                 $this->console->colorize($p->name, 'cyan');
         }
-        return sprintf(" - %s %s %s (%s)\n", 
-    //        $comment['text'],//
+        return sprintf("%s\n - %s %s %s (%s)\n", 
+            // $comment['text'] //,
             $this->renderModifiers($method),
             $this->console->colorize($meta['returnType'], 'cyan'),
             $this->console->colorize($method->name, 'white'),
@@ -185,7 +185,7 @@ class Phish_Renderer_Console extends Phish_Renderer
             $mods []= 'public';
         }
         if($r->isProtected()) {
-            $mods []= 'public';
+            $mods []= 'protected';
         }
         if($r->isPrivate()) {
             $mods []= 'private';
