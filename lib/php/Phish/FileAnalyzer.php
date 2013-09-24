@@ -1,11 +1,11 @@
 <?php
 /**
  *
- *	@package Phish_Command_Info
+ *	@package Phish
  */
 /**
  *
- *	@package Phish_Command_Info
+ *	@package Phish
  */
 class Phish_FileAnalyzer
 {
@@ -60,13 +60,24 @@ class Phish_FileAnalyzer
 
             switch($token[0]) {
 
+                case T_STRING :
+                    if($inNamespaceDeclaration) {
+                        $currentNamespace .= '\\' . $token[1];
+                    }
+                    break;
+
+                case T_NS_SEPARATOR:
+                    break;
+
                 case T_NAMESPACE :
                     if(!isset($tokens[$i+2])) {
                         continue;
                     }
                     //
-                    $currentNamespace = $tokens[$i+2][1];
-                    $this->namespaces []= $currentNamespace;
+                    $i = $i+2;
+                    $currentNamespace = $tokens[$i][1];
+                    // $this->namespaces []= $currentNamespace;
+                    $inNamespaceDeclaration = TRUE;
                     break;
 
                 case T_CLASS :
@@ -80,9 +91,11 @@ class Phish_FileAnalyzer
                             '\\' . $currentNamespace . '\\' . $classname;
                     }
                     $this->classes []= $classname;
+                    $inNamespaceDeclaration = FALSE;
                     break;
 
-                case T_FUNCTION :
+                default:
+                    $inNamespaceDeclaration = FALSE;
                     break;
             }
         }
