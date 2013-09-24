@@ -26,19 +26,18 @@ implements Jm_Configurable
         $this->receivedSigterm = FALSE;
         $in = Jm_Os_Inotify::init($this->log);
        
-        $paths = $this->configuration->get('paths');
+        $paths = $this->configuration->monitor->path;
         $options = IN_CLOSE_WRITE
             | IN_DELETE
             | IN_MOVED_TO
             | IN_MOVED_FROM;
 
-        foreach(explode(':', $paths) as $path) {
-            if(is_dir($path)) {
-                
+        foreach($paths as $path) {
+            if(is_dir($path->value)) {
                 $options |= Jm_Os_Inotify::IN_X_RECURSIVE;
             }
 
-            $in->watch($path, $options);
+            $in->watch($path->value, $options);
         }
 
         $this->index = Phish_Index::load('phish_info');
@@ -87,9 +86,9 @@ implements Jm_Configurable
     protected function analyze($paths) {
         $stack = array();
         $pattern = array();
-        foreach(explode(':', $paths) as $path) {
-            $stack []= $path;
-            $pattern []= preg_quote($path, '~');
+        foreach($paths as $path) {
+            $stack []= $path->value;
+            $pattern []= preg_quote($path->value, '~');
         }
 
         $pattern = implode('|', $pattern);
@@ -105,6 +104,11 @@ implements Jm_Configurable
             }
             
             foreach(scandir($current) as $entry) {
+
+                if($this->receivedSigterm) {
+                    break;
+                }
+
                 $filename = $current . '/' . $entry;
                 if(is_dir($filename)) {
                     if($entry === '..' || $entry === '.') {
@@ -236,9 +240,8 @@ implements Jm_Configurable
      * @return Phish_Daemon
      */
     public function configure($configuration) {
-        Jm_Util_Checktype::check(array('Jm_Configuration', 'array'),
-            $configuration);
-        $this->configuration = $configuration;
+        parent::configure($configuration);
+        $this->configuration->set('name', 'phishd'); 
     }
 }
 

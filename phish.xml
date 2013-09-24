@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<configuration xmlns="http://www.metashock.de/phish">
+  <customCommands>
+    <include>
+      <path>.phish/commands</path>
+    </include>
+  </customCommands>
+  <monitor>
+    <path>
+      <value>.</value>
+      <prefix>lithium</prefix>
+    </path>
+    <path>
+      <value>/usr/share/php/PEAR</value>
+      <prefix>PEAR</prefix>
+    </path>
+  </monitor>
+  <logging>
+    <logfile>phish.log</logfile>
+  </logging>
+</configuration>
