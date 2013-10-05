@@ -12,13 +12,11 @@ class Phish_Command_Fod extends Phish_Command
         $description = $provider->getDocumentationForFunction($function);
 
         $console = Jm_Console::singleton();
-        $console->writeln($function, 'blue,bold');
+        $renderer = new Phish_Renderer_Console();
+        $renderer->renderFunction(new ReflectionFunction($function));
         $console->writeln();
         $console->writeln($description);
-        $console->writeln();
-        $console->writeln('I hope you\'ve learned something.'
-            . ' have a nice day! :)', 'yellow,light');
-        $console->writeln();  
+        $console->writeln(); 
     }
 
 
