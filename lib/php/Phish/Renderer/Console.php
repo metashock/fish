@@ -1,43 +1,120 @@
 <?php
-
-
-
 /**
+ * Phish
  *
+ * Copyright (c) 2013, Thorsten Heymann <thorsten@metashock.de>.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ *   * Redistributions of source code must retain the above copyright
+ *     notice, this list of conditions and the following disclaimer.
+ *
+ *   * Redistributions in binary form must reproduce the above copyright
+ *     notice, this list of conditions and the following disclaimer in
+ *     the documentation and/or other materials provided with the
+ *     distribution.
+ *
+ *   * Neither the name Thorsten Heymann nor the names of his
+ *     contributors may be used to endorse or promote products derived
+ *     from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ * COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ *
+ * PHP Version >= 5.3.0
+ *
+ * @category  Util
+ * @package   Phish\Renderer
+ * @author    Thorsten Heymann <thorsten@metashock.de>
+ * @copyright 2013 Thorsten Heymann <thorsten@metashock.de>
+ * @license   BSD-3 http://www.opensource.org/licenses/BSD-3-Clause
+ * @version   GIT: $$GITVERSION$$
+ * @link      http://www.metashock.de/
+ * @since     0.1.0
+ */
+/**
+ * Renderer for the console output of the info command. As the info command
+ * was the first command in phish this class is much too specialized and
+ * needs to be refactored in a way that rendering functionality can be
+ * introduced by classes that will be delivered together with commands -
+ * to keep things flexible.
+ *
+ * @category  Util
+ * @package   Phish\Renderer
+ * @author    Thorsten Heymann <thorsten@metashock.de>
+ * @copyright 2013 Thorsten Heymann <thorsten@metashock.de>
+ * @license   BSD-3 http://www.opensource.org/licenses/BSD-3-Clause
+ * @version   GIT: $$GITVERSION$$a
+ * @link      http://www.metashock.de/
+ * @since     0.1.0
  */
 class Phish_Renderer_Console extends Phish_Renderer 
 {
 
-
+    /**
+     * Points the a Jm_Console instance which is used for printing
+     *
+     * @var Jm_Console
+     */
     protected $console;
 
 
-    public function __construct(){
+    /** 
+     * Constructor
+     *
+     * Initializes the console instance.
+     *
+     * @return Phish_Renderer_Console
+     */
+    public function __construct() {
         $this->console = Jm_Console::singleton();
     }
 
 
     /**
+     * Displays informantion about a class.
      *
+     * @param ReflectionFunction $class The class
+     * @param string             $file  Optional source file name
+     *
+     * @return Phish_Renderer_Console
      */
-    public function renderClass(ReflectionClass $rc, $file = '') {
-        $this->console->write('Class ', 'green,bold');
-        $this->console->write($rc->name, 'green');
+    public function displayClass(ReflectionClass $class, $file = '') {
+        $this->console->write($this->renderModifiers($class), 'yellow');
+        $this->console->write('class ', 'green,bold');
+        $this->console->write($class->name, 'green');
         $this->console->writeln(' (' . $file . ')', 'light'); 
-        $this->renderInheritanceGraph($rc);
-        $this->renderConstants($rc);   
-        $this->renderProperties($rc);
-        $this->renderConstructor($rc);
-        $this->renderMethods($rc);
+        $this->displayInheritanceGraph($class);
+        $this->displayConstants($class);   
+        $this->displayProperties($class);
+        $this->displayConstructor($class);
+        $this->displayMethods($class);
+
+        return $this;
     }
 
 
-
     /**
+     * Displays a function.
      *
+     * @param ReflectionFunction $function The function
+     *
+     * @return Phish_Renderer_Console
      */
-    public function renderFunction($function) {
-
+    public function displayFunction(ReflectionFunction $function) {
         $str = $this->console->colorize($function->getDocComment(), 'yellow');
 
         if($function->isInternal()) {
@@ -51,11 +128,11 @@ class Phish_Renderer_Console extends Phish_Renderer
 
         $params = array();
         foreach($function->getParameters() as $p) {
-             $typehint = '';
-             if(isset($meta['params'][$p->name])) {
+            $typehint = '';
+            if(isset($meta['params'][$p->name])) {
                 $typehint = $meta['params'][$p->name]['type'] . ' ';
-             }
-             $params []= $typehint . '$' . $p->name;
+            }
+            $params []= $typehint . '$' . $p->name;
         }
 
         $str .= sprintf("%s %s %s (%s)\n", 
@@ -73,37 +150,46 @@ class Phish_Renderer_Console extends Phish_Renderer
         }
 
         $this->console->write($str);
+        return $this;
     }
 
 
-
-
     /**
+     * Helper method. Returns the php.net/manual url for a certain function
      *
-     *  @return string
+     * @param string $function The function name
+     *
+     * @return string
      */
     public function linkToPhpNetFunctionDoc($function) {
-        $link = 'http://www.php.net/en/function.' . str_replace('_', '-', $function->name);
-        return $link;
+        $fmt = 'http://www.php.net/en/function.%s';
+        // PHP manual controllers using '-' instead of '_'
+        // Don't ask me why!
+        return sprintf($fmt, str_replace('_', '-', $function->name));
     }
 
 
     /**
+     * Displays parent classes of $class as a graph like:
      *
+     *     DateTime
+     *       + StdClass
+     *
+     * @param ReflectionClass $class The class
+     *
+     * @return Phish_Renderer
      */
-    public function renderInheritanceGraph($rc) {
-
-        $string = '';
-
+    public function displayInheritanceGraph(ReflectionClass $class) {
+        $string, $padding = '';
         $inhgraph = array();
-        $padding = '  ';
+        $indent = '  ';
 
-        while($rc = $rc->getParentClass()) {
+        while($class = $class->getParentClass()) {
             $inhgraph []= sprintf("%s+ extends %s",
                 $padding,
-                $this->console->colorize($rc->name,
+                $this->console->colorize($class->name,
                     'green'));
-            $padding .= '  ';
+            $padding .= $indent;
         };
 
         $ingraph []= sprintf("%s+ extends StdClass", $padding);
@@ -114,10 +200,13 @@ class Phish_Renderer_Console extends Phish_Renderer
 
 
     /**
-     *  @return string
+     * Renders a method.
+     *
+     * @param ReflectionMethod $method The method
+     *
+     * @return string
      */
-    public function renderMethod($method) {
-
+    public function renderMethod(ReflectionMethod $method) {
         $meta = $this->parseComment($method->getDocComment());
         $params = array();
 
@@ -131,30 +220,32 @@ class Phish_Renderer_Console extends Phish_Renderer
         }
 
         foreach($method->getParameters() as $p) {
-             $typehint = '';
-             if(isset($meta['params'][$p->name])) {
+            $typehint = '';
+            if(isset($meta['params'][$p->name])) {
                 $typehint = $meta['params'][$p->name]['type'] . ' ';
-             }
-             $params []= $typehint . 
+            }
+            $params []= $typehint . 
                 $this->console->colorize('$', 'yellow') . 
                 $this->console->colorize($p->name, 'cyan');
         }
-        return sprintf("%s\n - %s %s %s (%s)\n", 
-            // $comment['text'] //,
+        return sprintf("\n - %s %s %s (%s)\n", 
             $this->renderModifiers($method),
             $this->console->colorize($meta['returnType'], 'cyan'),
             $this->console->colorize($method->name, 'white'),
             $n > 2 ? implode($delim, $params) 
                 : implode($delim, $params)
         );
-
-        return PHP_EOL;
     }
+
         
     /**
-     *  @return string
+     * Renders a class property.
+     *  
+     * @param ReflectionProperty $property The property
+     *
+     * @return string
      */
-    public function renderProperty($property) {
+    public function renderProperty(ReflectionProperty $property) {
         return sprintf(" - %s %s%s\n",
             $this->renderModifiers($property),
             $this->console->colorize('$', 'yellow'), 
@@ -164,47 +255,57 @@ class Phish_Renderer_Console extends Phish_Renderer
 
 
     /**
-     *  @return string
+     * Renders a class constant. Note that there is no ReflectionConstant
+     * class. That's why $key and $value being passed.
+     *
+     * @param string $constname The constant's name
+     * @param mixed  $value     The constant's value
+     *
+     * @return string
      */
-    public function renderConstant($constant) {
-        return;
-
-        return sprintf(" - %s %s%s\n",
-            $this->renderModifiers($constant),
-            $this->console->colorize('$',
-                $this->console->YELLOW, $this->console->BOLD), 
-            $this->console->colorize($constant->name,
-                $this->console->GRAY, $this->console->BOLD)
+    public function renderConstant($constname, $value) {
+        return sprintf(' - %s = "%s";%s',
+            $this->console->colorize($constname, 'white'),
+            $this->console->colorize($value, 'yellow'),
+            PHP_EOL
         );
     }
 
 
-    public function renderModifiers($r) {
-        $mods = array();
-        if($r->isPublic()) {
-            $mods []= 'public';
+    /**
+     * Renders modifiers (public, private, .., static, ..)
+     * for a method or property.
+     *
+     * @param Reflector $reflector Any object which's type inherits Reflector
+     * @param string    $style     Optional style attribute. Defaults to green
+     *
+     * @return string
+     */
+    public function renderModifiers(Reflector $reflector, $style = 'green') {
+        if(method_exists($reflector, 'getModifiers')) {
+            $mods = $reflector->getModifiers();
+        } else {
+            $mods = 0;
         }
-        if($r->isProtected()) {
-            $mods []= 'protected';
-        }
-        if($r->isPrivate()) {
-            $mods []= 'private';
-        }
-        if($r->isStatic()) {
-            $mods []= 'static';
-        }
-      
-        return $this->console->colorize(implode(' ', $mods), 'green');
+
+        return $this->console->colorize(
+            implode(' ', Reflection::getModifierNames($mods)),
+            $style
+        );
     }
 
 
     /**
+     * Displays class methods.
      *
+     * @param ReflectionClass $class The class
+     *
+     * @return Phish_Renderer_Console
      */
-    public function renderMethods($rc) {
+    public function displayMethods(ReflectionClass $class) {
         $this->console->writeln('Methods', 'blue,bold');
         $map = array();
-        foreach($rc->getMethods() as $m) {
+        foreach($class->getMethods() as $m) {
             if($m->isConstructor()) {
                 continue;
             }
@@ -217,55 +318,80 @@ class Phish_Renderer_Console extends Phish_Renderer
         }
 
         foreach($map as $declaringClass => $methods) {
-            $this->console->writeln(sprintf("%s %s %s", PHP_EOL, $declaringClass, PHP_EOL), 'light');
+            $this->console->writeln(sprintf("%s %s %s",
+                PHP_EOL, $declaringClass, PHP_EOL
+            ), 'light');
             foreach ($methods as $m) {
                 echo $this->renderMethod($m);
             }
         }
         $this->console->writeln();
+        return $this;
     }
 
 
     /**
+     * Displays a class constructor.
      *
+     * @param ReflectionClass $class The class
+     *
+     * @return Phish_Renderer_Console
      */
-    public function renderConstructor($rc) {
-        if(!is_null($rc->getConstructor())) {
+    public function displayConstructor(ReflectionClass $class) {
+        if(!is_null($class->getConstructor())) {
             $this->console->writeln('Constructor:', 'blue,bold');
-            echo $this->renderMethod($rc->getConstructor());
+            echo $this->renderMethod($class->getConstructor());
         }
         $this->console->writeln();
+        return $this;
     }
 
+
     /**
+     * Displays class properties.
      *
+     * @param ReflectionClass $class The class
+     *
+     * @return Phish_Renderer_Console
      */
-    public function renderProperties($rc) {
+    public function displayProperties(ReflectionClass $class) {
         $this->console->writeln('Properties:', 'blue,bold');
-        foreach ($rc->getProperties() as $p) {
+        foreach ($class->getProperties() as $p) {
             echo $this->renderProperty($p);
         }
         $this->console->writeln();
+        return $this;
     }
 
 
     /**
+     * Displays class constants.
      *
+     * @param ReflectionClass $class The class
+     *
+     * @return Phish_Renderer_Console
      */
-    public function renderConstants($rc) {
+    public function displayConstants(ReflectionClass $class) {
         $this->console->writeln('Constants:', 'blue,bold');
-        foreach ($rc->getConstants() as $c) {
-            echo $this->renderConstant($c);
+        foreach ($class->getConstants() as $key => $value) {
+            echo $this->renderConstant($key, $value);
         }
         $this->console->writeln();
+        return $this;
     }
 
 
-    public function renderElementNotFound($search) {
+    /** 
+     * Displays a notice if a class or function wasn't found.
+     *
+     * @param string $search The search string that gave no results
+     *
+     * @return Phish_Renderer_Console
+     */
+    public function displayElementNotFound($search) {
         $this->console->writeln(
             'Class or function ' . $search . ' was not found', 'red'
         );
+        return $this;
     }
-
 }
-
