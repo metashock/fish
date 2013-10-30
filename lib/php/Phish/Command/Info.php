@@ -17,13 +17,20 @@ class Phish_Command_Info extends Phish_Command
 
         $configuration = new Jm_Configuration_Xmlfile('phish.xml');
 
-        foreach($configuration->monitor->path as $path) {
-            if($path->has('prefix')) {
-                $prefix = $path->prefix;
-            } else {
-                $prefix = '';
-            }
-            Jm_Autoloader::singleton()->addPath($path, $prefix);
+        // If we found a configuration file in the current folder
+        // and it contains a monitoring section then add the monitored
+        // paths to autoload path to find custom project classes
+        //
+        // @TODO shouldn't we use the index here?
+        if($configuration->has('monitor')) {
+            foreach($configuration->monitor->path as $path) {
+                if($path->has('prefix')) {
+                    $prefix = $path->prefix;
+                } else {
+                    $prefix = '';
+               }
+               Jm_Autoloader::singleton()->addPath($path, $prefix);
+            } 
         }
 
         if(!is_null($entry)) {
@@ -31,7 +38,6 @@ class Phish_Command_Info extends Phish_Command
         }
 
         try {
-
             $renderer = new Phish_Renderer_Console();
             if(class_exists($search)) {
                 $renderer->renderClass(new ReflectionClass($search), $entry);
