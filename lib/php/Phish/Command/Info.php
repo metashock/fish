@@ -30,14 +30,59 @@ class Phish_Command_Info extends Phish_Command
             require_once $entry;
         }
 
-        $renderer = new Phish_Renderer_Console();
-        if(class_exists($search)) {
-            $renderer->renderClass(new ReflectionClass($search), $entry);
-        } else if (function_exists($search)) {
-            $renderer->renderFunction(new ReflectionFunction($search));
-        } else { 
-            $renderer->renderElementNotFound($search);
+        try {
+
+            $renderer = new Phish_Renderer_Console();
+            if(class_exists($search)) {
+                $renderer->renderClass(new ReflectionClass($search), $entry);
+            } else if (function_exists($search)) {
+                $renderer->displayFunction(new ReflectionFunction($search));
+            } else if ($funcs = $this->findFuncs($search)) {
+                foreach($funcs as $func) {
+                    $renderer->displayFunction($func);
+                }
+            } else { 
+                $renderer->displayElementNotFound($search);
+            }
+
+        } catch (Phish_Command_Info_BadRegexException $e) {
+            $renderer->displayFatal($e->getMessage());
+            $this->terminate(1);
         }
+    }
+
+
+    /**
+     * Finds internal or user defined functions based on a regex
+     * Returns an array with ReflectionFunction objects or NULL
+     * if no functions were found.
+     *
+     * @return array|NULL
+     */
+    public function findFuncs($needle) {
+        $result = array();
+        $funcs = get_defined_functions();
+
+        foreach(array('internal', 'user') as $key) {
+            foreach($funcs[$key] as $f) {
+                $ret = @preg_match('~' . $needle . '~', $f);
+                switch(TRUE) {
+                    case $ret === FALSE :
+                        $error = error_get_last();
+                        if($error) {
+                            $msg = $error['message'];
+                        } else {
+                            $msg = 'Unknown error';
+                        }
+                        throw new Phish_Command_Info_BadRegexException($msg);
+
+                    // function was found :
+                    case $ret === 1 :
+                        $result []= new ReflectionFunction($f);
+                }
+            }
+        }
+        return empty($result) ? NULL : $result;
     }
 
 
