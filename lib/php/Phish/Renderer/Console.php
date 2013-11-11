@@ -180,7 +180,7 @@ class Phish_Renderer_Console extends Phish_Renderer
      * @return Phish_Renderer
      */
     public function displayInheritanceGraph(ReflectionClass $class) {
-        $string, $padding = '';
+        $string = $padding = '';
         $inhgraph = array();
         $indent = '  ';
 
@@ -392,6 +392,20 @@ class Phish_Renderer_Console extends Phish_Renderer
         $this->console->writeln(
             'Class or function ' . $search . ' was not found', 'red'
         );
+        return $this;
+    }
+
+
+    /**
+     * Renders a fatal error
+     *
+     * @param string $message The error message
+     *
+     * @return Phish_Renderer_Console
+     */
+    public function renderFatal($message) {
+        $this->console->writeln('Fatal error:', 'red,bold');
+        $this->console->writeln($message);
         return $this;
     }
 }
