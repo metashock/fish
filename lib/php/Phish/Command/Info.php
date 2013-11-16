@@ -40,7 +40,7 @@ class Phish_Command_Info extends Phish_Command
         try {
             $renderer = new Phish_Renderer_Console();
             if(class_exists($search)) {
-                $renderer->renderClass(new ReflectionClass($search), $entry);
+                $renderer->displayClass(new ReflectionClass($search), $entry);
             } else if (function_exists($search)) {
                 $renderer->displayFunction(new ReflectionFunction($search));
             } else if ($funcs = $this->findFuncs($search)) {

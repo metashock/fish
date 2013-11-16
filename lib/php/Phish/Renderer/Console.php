@@ -121,10 +121,10 @@ class Phish_Renderer_Console extends Phish_Renderer
             $str = $this->console->colorize("/**\n * @internal " .  
                 $this->linkToPhpNetFunctionDoc($function) . "\n */",
             'yellow');
-        } 
+        }
 
         $str .= PHP_EOL;
-        $meta = $this->parseComment($function->getDocComment());
+        $meta = Phish_FileAnalyzer::parseComment($function->getDocComment());
 
         $params = array();
         foreach($function->getParameters() as $p) {
@@ -207,7 +207,7 @@ class Phish_Renderer_Console extends Phish_Renderer
      * @return string
      */
     public function renderMethod(ReflectionMethod $method) {
-        $meta = $this->parseComment($method->getDocComment());
+        $meta = Phish_FileAnalyzer::parseComment($method->getDocComment());
         $params = array();
 
         $delim = ',';
